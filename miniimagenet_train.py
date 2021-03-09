@@ -6,6 +6,7 @@ from    torch.utils.data import DataLoader
 from    torch.optim import lr_scheduler
 import  random, sys, pickle
 import  argparse
+from tqdm import tqdm
 
 from meta import Meta
 from models import STSTNet
@@ -32,10 +33,10 @@ def main():
     print('Total trainable tensors:', num)
 
     # batchsz here means total episode number
-    mini = MiniImagenet('/home/qwq/miniImagenet/', mode='train', n_way=args.n_way, k_shot=args.k_spt,
+    mini = MiniImagenet('/home/lf/miniImagenet/', mode='train', n_way=args.n_way, k_shot=args.k_spt,
                         k_query=args.k_qry,
                         batchsz=10000, resize=args.imgsz)
-    mini_test = MiniImagenet('/home/qwq/miniImagenet/', mode='test', n_way=args.n_way, k_shot=args.k_spt,
+    mini_test = MiniImagenet('/home/lf/miniImagenet/', mode='test', n_way=args.n_way, k_shot=args.k_spt,
                              k_query=args.k_qry,
                              batchsz=100, resize=args.imgsz)
 
@@ -43,7 +44,7 @@ def main():
         # fetch meta_batchsz num of episode each time
         db = DataLoader(mini, args.task_num, shuffle=True, num_workers=1, pin_memory=True)
 
-        for step, (x_spt, y_spt, x_qry, y_qry) in enumerate(db):
+        for step, (x_spt, y_spt, x_qry, y_qry) in tqdm(enumerate(db)):
 
             x_spt, y_spt, x_qry, y_qry = x_spt.to(device), y_spt.to(device), x_qry.to(device), y_qry.to(device)
 
@@ -66,6 +67,7 @@ def main():
                 # [b, update_step+1]
                 accs = np.array(accs_all_test).mean(axis=0).astype(np.float16)
                 print('Test acc:', accs)
+    torch.save(maml.net,'maml_ststnet.pth')
 
 
 if __name__ == '__main__':
